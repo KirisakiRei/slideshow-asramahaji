@@ -1,0 +1,66 @@
+name: slideshow
+
+services:
+  app:
+    image: slideshow-photo:latest
+    container_name: slideshow-app
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "2026:80"
+    environment:
+      - APP_NAME=PhotoSlideshow
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:2026
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=slideshow_db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=${DB_PASSWORD:-changeme}
+      - SESSION_DRIVER=database
+      - CACHE_STORE=database
+      - QUEUE_CONNECTION=database
+      - FILESYSTEM_DISK=local
+    volumes:
+      - type: bind
+        source: ${MEDIA_ROOT:-C:/slideshow/public}/photo
+        target: /var/www/html/storage/app/public/photos
+      - type: bind
+        source: ${MEDIA_ROOT:-C:/slideshow/public}/video
+        target: /var/www/html/storage/app/public/videos
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - slideshow-net
+
+  db:
+    image: mysql:8.0
+    container_name: slideshow-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-changeme}
+      - MYSQL_DATABASE=slideshow_db
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=${DB_PASSWORD:-changeme}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - slideshow-net
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  slideshow-net:
+    driver: bridge

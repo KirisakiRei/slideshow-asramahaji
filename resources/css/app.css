@@ -1,0 +1,235 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+.field-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    color: #94a3b8;
+    cursor: help;
+    flex-shrink: 0;
+    outline: none;
+}
+
+.field-tip svg {
+    width: 15px;
+    height: 15px;
+}
+
+.field-tip-bubble {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(2px);
+    width: max-content;
+    max-width: 280px;
+    padding: 8px 11px;
+    border-radius: 8px;
+    background: #1f2937;
+    color: #f9fafb;
+    font-size: 12px;
+    line-height: 1.55;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    text-align: left;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease, transform 140ms ease;
+    z-index: 60;
+}
+
+.field-tip-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1f2937;
+}
+
+.field-tip-bubble--bottom {
+    bottom: auto;
+    top: calc(100% + 8px);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+.field-tip-bubble--bottom::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: #1f2937;
+}
+
+.field-tip-bubble--right {
+    bottom: auto;
+    top: calc(100% + 8px);
+    left: 0;
+    transform: translateY(-2px);
+}
+
+.field-tip-bubble--right::after {
+    top: auto;
+    bottom: 100%;
+    left: 6px;
+    transform: none;
+    border-top-color: transparent;
+    border-bottom-color: #1f2937;
+}
+
+.field-tip:hover .field-tip-bubble,
+.field-tip:focus .field-tip-bubble {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.field-tip:hover .field-tip-bubble.field-tip-bubble--right,
+.field-tip:focus .field-tip-bubble.field-tip-bubble--right {
+    transform: translateY(0);
+}
+
+#sidebar {
+    width: 16rem;
+    /* Gabung width (collapse desktop) + translate (drawer mobile) biar
+       keduanya ter-animasi. Tailwind v4 menggeser drawer via properti
+       `translate`, bukan `transform`, jadi wajib dicantumkan disini. */
+    transition:
+        width 260ms cubic-bezier(0.4, 0, 0.2, 1),
+        transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+        translate 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Label menu (link + header): fade & susut halus biar ikon pas di tengah */
+#sidebar .sidebar-label {
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 200px;
+    transition:
+        opacity 160ms ease,
+        max-width 220ms ease;
+}
+
+/* Section header button (Media/Slideshow/Display Content) */
+#sidebar .sidebar-section {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Nav links & section toggles: animate icon centering + padding */
+#sidebar nav a,
+#sidebar nav button {
+    transition:
+        justify-content 260ms cubic-bezier(0.4, 0, 0.2, 1),
+        padding 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#sidebar nav a svg,
+#sidebar nav button svg {
+    transition: margin 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-group {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 220ms ease;
+}
+
+.sidebar-group-collapsed {
+    grid-template-rows: 0fr;
+}
+
+.sidebar-group-inner {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.admin-content {
+    transition: margin-left 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-toast {
+    transform: translateY(-8px);
+    opacity: 0;
+    transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.login-toast-show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+@media (min-width: 64rem) {
+    body.sidebar-collapsed #sidebar {
+        width: 5rem;
+    }
+
+    /* Section header (Media/Slideshow/Display Content): hilang total biar
+       icon rail bersih tanpa baris kosong */
+    body.sidebar-collapsed #sidebar .sidebar-section {
+        display: none;
+    }
+
+    /* Arrow external "Buka Display": sembunyikan penuh */
+    body.sidebar-collapsed #sidebar .sidebar-external {
+        display: none;
+    }
+
+    /* Label menu: fade + susut ke lebar 0 biar ikon benar-benar di tengah.
+       Pakai max-width (bisa di-animate), bukan display, biar halus. */
+    body.sidebar-collapsed #sidebar .sidebar-label {
+        opacity: 0;
+        visibility: hidden;
+        margin-left: 0;
+        max-width: 0;
+        transition:
+            opacity 100ms ease,
+            visibility 0s linear 100ms,
+            max-width 180ms ease;
+    }
+
+    body.sidebar-collapsed #sidebar nav a,
+    body.sidebar-collapsed #sidebar nav button {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    body.sidebar-collapsed #sidebar nav a svg,
+    body.sidebar-collapsed #sidebar nav button svg {
+        margin-right: 0;
+    }
+
+    body.sidebar-collapsed .admin-content {
+        margin-left: 5rem;
+    }
+}
+
+/* ──────────────────────────────────────────────
+   Responsive data-table: show cards below lg:
+   ────────────────────────────────────────────── */
+.data-table-mobile { display: block; }
+.data-table-desktop { display: none; }
+
+@media (min-width: 64rem) {
+    .data-table-mobile { display: none; }
+    .data-table-desktop { display: block; }
+}
+
+/* Prevent any child from forcing horizontal scroll */
+.admin-content > main > * {
+    min-width: 0;
+    max-width: 100%;
+}
