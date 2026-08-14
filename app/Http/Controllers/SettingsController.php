@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
@@ -34,5 +35,38 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.password')
             ->with('success', 'Password berhasil diubah. Gunakan password baru pada login berikutnya.');
+    }
+
+    /**
+     * Show the crop template ratios for each slideshow slot.
+     */
+    public function showCrop()
+    {
+        return view('admin.settings.crop', [
+            'templates' => Setting::cropTemplates(),
+        ]);
+    }
+
+    /**
+     * Update the crop template ratios used as admin preview guides.
+     */
+    public function updateCrop(Request $request)
+    {
+        $validated = $request->validate([
+            'main' => ['required', 'string', 'max:32', 'regex:/^\d+\s*:\s*\d+$/'],
+            'facilities' => ['required', 'string', 'max:32', 'regex:/^\d+\s*:\s*\d+$/'],
+            'next_event' => ['required', 'string', 'max:32', 'regex:/^\d+\s*:\s*\d+$/'],
+        ], [
+            'main.regex' => 'Format rasio harus berupa "lebar:tinggi", contoh 907:656.',
+            'facilities.regex' => 'Format rasio harus berupa "lebar:tinggi", contoh 239:143.',
+            'next_event.regex' => 'Format rasio harus berupa "lebar:tinggi", contoh 608:315.',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            Setting::set('crop_template_'.$key, trim($value));
+        }
+
+        return redirect()->route('settings.crop')
+            ->with('success', 'Template crop berhasil disimpan.');
     }
 }

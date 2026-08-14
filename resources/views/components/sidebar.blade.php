@@ -98,7 +98,7 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1V5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 20h18M5 20v-6m4 6v-6m6 6v-6m4 6v-6"/></svg>
                     <span class="sidebar-label">Footer Info</span>
                 </a>
-                <a href="{{ route('running-texts.index') }}"
+<a href="{{ route('running-texts.index') }}"
                    class="flex items-center px-4 py-2.5 text-sm rounded-md transition-colors {{ request()->routeIs('running-texts.*') ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 12h18M3 19h12"/></svg>
                     <span class="sidebar-label">Running Text</span>
@@ -106,6 +106,25 @@
             </div>
         </div>
 
+        <!-- Settings Section -->
+        <button type="button" class="sidebar-section sidebar-section-btn w-full flex items-center justify-between px-4 pt-4 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider hover:text-slate-300" data-group-toggle="settings" aria-expanded="true">
+            <span>Settings</span>
+            <svg class="sidebar-chevron w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div class="sidebar-group" data-group="settings">
+            <div class="sidebar-group-inner space-y-1">
+                <a href="{{ route('settings.crop') }}"
+                   class="flex items-center px-4 py-2.5 text-sm rounded-md transition-colors {{ request()->routeIs('settings.crop*') ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    <span class="sidebar-label">Template Crop</span>
+                </a>
+                <a href="{{ route('settings.password') }}"
+                   class="flex items-center px-4 py-2.5 text-sm rounded-md transition-colors {{ request()->routeIs('settings.password*') ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <span class="sidebar-label">Change Password</span>
+                </a>
+            </div>
+        </div>
     </nav>
 </aside>
 

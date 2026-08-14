@@ -10,6 +10,31 @@ class Setting extends Model
     protected $fillable = ['key', 'value'];
 
     /**
+     * Default framing ratios (W:H) measured from the live 1080x1920 display
+     * layout: one template per slideshow slot. Used as admin preview guides,
+     * editable from the crop settings page. Display render is unaffected.
+     */
+    public const CROP_TEMPLATE_DEFAULTS = [
+        'main' => '907:656',
+        'facilities' => '239:143',
+        'next_event' => '608:315',
+    ];
+
+    /**
+     * Get the three crop template ratios keyed by display slot.
+     *
+     * @return array<string, string>
+     */
+    public static function cropTemplates(): array
+    {
+        return [
+            'main' => static::get('crop_template_main', self::CROP_TEMPLATE_DEFAULTS['main']),
+            'facilities' => static::get('crop_template_facilities', self::CROP_TEMPLATE_DEFAULTS['facilities']),
+            'next_event' => static::get('crop_template_next_event', self::CROP_TEMPLATE_DEFAULTS['next_event']),
+        ];
+    }
+
+    /**
      * Get a setting value by key with optional default.
      */
     public static function get(string $key, $default = null)

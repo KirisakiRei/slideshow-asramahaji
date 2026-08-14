@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePhotoRequest;
 use App\Http\Requests\UpdatePhotoRequest;
 use App\Models\Photo;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -117,7 +118,15 @@ class PhotoController extends Controller
      */
     public function edit(Photo $photo)
     {
-        return view('admin.photos.edit', compact('photo'));
+        return view('admin.photos.edit', [
+            'photo' => $photo,
+            'cropTemplates' => Setting::cropTemplates(),
+            'cropTemplateLabels' => [
+                'main' => 'Slideshow Utama',
+                'facilities' => 'Fasilitas',
+                'next_event' => 'Event Selanjutnya',
+            ],
+        ]);
     }
 
     /**
@@ -132,10 +141,41 @@ class PhotoController extends Controller
             'is_active' => $request->has('is_active') ? (bool) $validated['is_active'] : false,
             'focus_x' => $validated['focus_x'] ?? $photo->focus_x ?? 50,
             'focus_y' => $validated['focus_y'] ?? $photo->focus_y ?? 50,
+            'crop_zoom' => $validated['crop_zoom'] ?? $photo->crop_zoom ?? 100,
+            'crop_data' => $this->normalizeCropData($validated['crop_data'] ?? null, $photo),
         ]);
 
         return redirect()->route('photos.index')
             ->with('success', 'Foto berhasil diperbarui.');
+    }
+
+    /**
+     * Build a complete per-slot framing payload, filling unspecified slots
+     * with the legacy single framing so every photo always has data for all slots.
+     */
+    private function normalizeCropData(?array $cropData, Photo $photo): ?array
+    {
+        if (! is_array($cropData)) {
+            return null;
+        }
+
+        $legacy = [
+            'fx' => max(0, min(100, (int) ($photo->focus_x ?? 50))),
+            'fy' => max(0, min(100, (int) ($photo->focus_y ?? 50))),
+            'zoom' => max(100, min(400, (int) ($photo->crop_zoom ?? 100))),
+        ];
+
+        $out = [];
+        foreach (Photo::FRAMING_SLOTS as $slot) {
+            $s = $cropData[$slot] ?? [];
+            $out[$slot] = [
+                'fx' => isset($s['fx']) ? max(0, min(100, (int) $s['fx'])) : $legacy['fx'],
+                'fy' => isset($s['fy']) ? max(0, min(100, (int) $s['fy'])) : $legacy['fy'],
+                'zoom' => isset($s['zoom']) ? max(100, min(400, (int) $s['zoom'])) : $legacy['zoom'],
+            ];
+        }
+
+        return $out;
     }
 
     /**

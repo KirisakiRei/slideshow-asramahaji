@@ -101,7 +101,7 @@ class DisplayController extends Controller
         }
 
         if ($previewGroup !== null) {
-            $previewSlides = $this->safeGroupSlides($previewGroup);
+            $previewSlides = $this->safeGroupSlides($previewGroup, 'main');
 
             if (empty($previewSlides)) {
                 return $this->errorView('Slideshow tidak tersedia', 404);
@@ -113,10 +113,10 @@ class DisplayController extends Controller
         $config = $this->safeConfig();
         $facilities = $this->safeFacilities();
         $facilitySlots = $previewGroup !== null
-            ? $this->buildFacilitySlots($facilities, fn () => $previewSlides)
+            ? $this->buildFacilitySlots($facilities, fn () => $this->safeGroupSlides($previewGroup, 'facilities'))
             : $this->buildFacilitySlots($facilities, fn ($slot) => $this->safeSlotSlides("facility_{$slot}"));
         $eventSlides = $previewGroup !== null
-            ? $previewSlides
+            ? $this->safeGroupSlides($previewGroup, 'next_event')
             : $this->safeSlotSlides(DisplaySlotGroup::SLOT_NEXT_EVENT);
         $runningTexts = $this->safeRunningTexts();
         $statusHash = $this->safeContentHash();
@@ -298,7 +298,7 @@ class DisplayController extends Controller
                 }
 
                 foreach ($group->activePhotos()->with('photo')->get() as $item) {
-                    $slide = $this->mapItemToSlide($item, $group);
+                    $slide = $this->mapItemToSlide($item, $group, $this->framingKeyForSlot($slot));
                     if ($slide !== null) {
                         $slides[] = $slide;
                     }
@@ -316,9 +316,22 @@ class DisplayController extends Controller
     }
 
     /**
+     * Map a physical display slot to its framing key: all facility frames
+     * share one framing set since they render at identical aspect ratios.
+     */
+    private function framingKeyForSlot(string $slot): string
+    {
+        if (str_starts_with($slot, 'facility_')) {
+            return 'facilities';
+        }
+
+        return in_array($slot, ['main', 'next_event'], true) ? $slot : 'main';
+    }
+
+    /**
      * Map a group item to a slide payload. Returns null when unusable.
      */
-    private function mapItemToSlide($item, PhotoGroup $group): ?array
+    private function mapItemToSlide($item, PhotoGroup $group, string $framingKey = 'main'): ?array
     {
         $photo = $item->photo ?? null;
         if (! $photo) {
@@ -345,10 +358,10 @@ class DisplayController extends Controller
             $fill = 'cover';
         }
 
-        $focusX = (int) ($photo->focus_x ?? 50);
-        $focusY = (int) ($photo->focus_y ?? 50);
-        $focusX = max(0, min(100, $focusX));
-        $focusY = max(0, min(100, $focusY));
+        $framing = $photo->framingFor($framingKey);
+        $focusX = $framing['fx'];
+        $focusY = $framing['fy'];
+        $zoom = $framing['zoom'];
 
         return [
             'url' => asset('storage/'.ltrim($path, '/')),
@@ -359,19 +372,20 @@ class DisplayController extends Controller
             'fill' => $fill,
             'focusX' => $focusX,
             'focusY' => $focusY,
+            'zoom' => $zoom,
         ];
     }
 
     /**
      * Ordered playlist of every active media in a group (preview mode).
      */
-    private function safeGroupSlides(PhotoGroup $group): array
+    private function safeGroupSlides(PhotoGroup $group, string $framingKey = 'main'): array
     {
         try {
             $slides = [];
 
             foreach ($group->activePhotos()->with('photo')->get() as $item) {
-                $slide = $this->mapItemToSlide($item, $group);
+                $slide = $this->mapItemToSlide($item, $group, $framingKey);
                 if ($slide !== null) {
                     $slides[] = $slide;
                 }
@@ -427,6 +441,8 @@ class DisplayController extends Controller
                 'type' => $p->type,
                 'focus_x' => $p->focus_x,
                 'focus_y' => $p->focus_y,
+                'crop_zoom' => $p->crop_zoom,
+                'crop_data' => $p->crop_data,
                 'updated_at' => optional($p->updated_at)->toJSON(),
             ]),
             'facilities' => Facility::orderBy('slot')->get()->map(fn ($f) => [

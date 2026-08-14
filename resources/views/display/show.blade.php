@@ -1426,6 +1426,8 @@
                         layer.appendChild(bg);
                     } else {
                         img.style.objectPosition = (slide.focusX || 50) + '% ' + (slide.focusY || 50) + '%';
+                        img.style.transformOrigin = (slide.focusX || 50) + '% ' + (slide.focusY || 50) + '%';
+                        img.style.transform = 'scale(' + (((slide.zoom || 100) / 100) * 1) + ')';
                     }
 
                     layer.appendChild(img);
@@ -1669,6 +1671,8 @@
                     container.appendChild(bg);
                 } else {
                     img.style.objectPosition = (slide.focusX || 50) + '% ' + (slide.focusY || 50) + '%';
+                    img.style.transformOrigin = (slide.focusX || 50) + '% ' + (slide.focusY || 50) + '%';
+                    img.style.transform = 'scale(' + (((slide.zoom || 100) / 100) * 1) + ')';
                 }
 
                 container.appendChild(img);

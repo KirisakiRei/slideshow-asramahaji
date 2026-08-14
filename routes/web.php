@@ -32,6 +32,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/password', [SettingsController::class, 'showPassword'])->name('settings.password');
     Route::post('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
 
+    Route::get('/settings/crop', [SettingsController::class, 'showCrop'])->name('settings.crop');
+    Route::post('/settings/crop', [SettingsController::class, 'updateCrop'])->name('settings.crop.update');
+
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
