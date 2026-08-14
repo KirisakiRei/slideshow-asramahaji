@@ -50,10 +50,10 @@
                         @if($photo->isPhoto())
                             <div id="crop-wrap" class="w-full h-full flex items-center justify-center p-4">
                                 <div id="crop-box" class="relative bg-black select-none"
-                                     style="width: 100%; aspect-ratio: {{ $mainW }}/{{ $mainH }}; overflow: hidden; cursor: crosshair; touch-action: none;">
+                                     style="width: 100%; aspect-ratio: {{ $mainW }}/{{ $mainH }}; overflow: hidden; cursor: crosshair; touch-action: none; -webkit-user-drag: none;">
                                     <img id="focus-img" src="{{ asset('storage/' . $photo->file_path) }}"
-                                         alt="{{ $photo->title }}"
-                                         style="position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:50% 50%;">
+                                         alt="{{ $photo->title }}" draggable="false"
+                                         style="position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:50% 50%; -webkit-user-drag: none;">
                                     <div id="focus-marker" class="absolute pointer-events-none"
                                          style="width:22px;height:22px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.6);transform:translate(-50%,-50%);"></div>
                                 </div>
@@ -86,7 +86,11 @@
                                 Reset Framing
                             </button>
                         </div>
-                        <p class="mt-3 text-xs text-slate-500">Atur <strong>posisi</strong> (drag pada preview) dan <strong>zoom</strong> untuk tiap frame slideshow secara terpisah: Slideshow Utama, Fasilitas, dan Event Selanjutnya. Pilih acuannya di atas, sesuaikan, lalu simpan — hasil di display otomatis memakai framing sesuai frame-nya. Video selalu tampil utuh.</p>
+                        <p class="mt-3 text-xs text-slate-500">Atur <strong>posisi</strong> (drag pada preview) dan <strong>zoom</strong> (geser slider ou scroll pada preview) untuk tiap frame slideshow secara terpisah: Slideshow Utama, Fasilitas, dan Event Selanjutnya. Pilih acuannya di atas, sesuaikan, lalu simpan — hasil di display otomatis memakai framing sesuai frame-nya. Video selalu tampil utuh.</p>
+                        <div id="draft-badge" class="hidden mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            Ada draft pengaturan yang belum tersimpan di browser ini.
+                            <button type="button" id="draft-discard" class="underline font-medium hover:text-amber-900">Buang draft</button>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -160,6 +164,53 @@
                 };
             });
 
+            function blockNativeDrag(e) {
+                if (e.type === 'dragstart') e.preventDefault();
+            }
+            img.addEventListener('dragstart', blockNativeDrag);
+            box.addEventListener('dragstart', blockNativeDrag);
+
+            const DRAFT_KEY = 'slideshow_crop_draft_' + @json((string) $photo->id);
+            const draftBadge = document.getElementById('draft-badge');
+            const draftDiscard = document.getElementById('draft-discard');
+
+            function serializeState() {
+                const out = {};
+                slotKeys.forEach(function (key) {
+                    const inp = slotInputs[key];
+                    out[key] = { fx: inp.fx.value, fy: inp.fy.value, zoom: inp.zoom.value };
+                });
+                return out;
+            }
+
+            function saveDraft() {
+                try {
+                    const cur = serializeState();
+                    if (JSON.stringify(cur) === JSON.stringify(serverState)) {
+                        localStorage.removeItem(DRAFT_KEY);
+                        return;
+                    }
+                    localStorage.setItem(DRAFT_KEY, JSON.stringify(cur));
+                } catch (e) {}
+            }
+
+            function restoreDraft() {
+                let raw = null;
+                try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) {}
+                if (!raw) return null;
+                try {
+                    const data = JSON.parse(raw);
+                    slotKeys.forEach(function (key) {
+                        if (data[key] && slotInputs[key]) {
+                            slotInputs[key].fx.value = data[key].fx != null ? data[key].fx : slotInputs[key].fx.value;
+                            slotInputs[key].fy.value = data[key].fy != null ? data[key].fy : slotInputs[key].fy.value;
+                            slotInputs[key].zoom.value = data[key].zoom != null ? data[key].zoom : slotInputs[key].zoom.value;
+                        }
+                    });
+                    return data;
+                } catch (e) { return null; }
+            }
+
             let active = slotKeys[0];
             let fx = 50, fy = 50, zoom = 100;
             let ratio = templates[active] && templates[active].w && templates[active].h
@@ -199,6 +250,7 @@
                 marker.style.top = fy + '%';
                 range.value = zoom;
                 zoomValue.textContent = zoom + '%';
+                saveDraft();
             }
 
             const btnBase = 'px-3 py-1.5 rounded-md border text-xs font-medium transition-colors';
@@ -243,6 +295,30 @@
                 tmplBtns.appendChild(btn);
             });
 
+            const serverState = serializeState();
+            const restored = restoreDraft();
+            const draftDiffers = restored !== null &&
+                JSON.stringify(restored) !== JSON.stringify(serverState);
+            if (draftDiffers && draftBadge) {
+                draftBadge.classList.remove('hidden');
+            } else if (restored !== null) {
+                try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+            }
+            if (draftDiscard) {
+                draftDiscard.addEventListener('click', function () {
+                    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+                    slotKeys.forEach(function (key) {
+                        const inp = slotInputs[key];
+                        inp.fx.value = serverState[key].fx;
+                        inp.fy.value = serverState[key].fy;
+                        inp.zoom.value = serverState[key].zoom;
+                    });
+                    if (draftBadge) draftBadge.classList.add('hidden');
+                    loadSlot(active);
+                    apply();
+                });
+            }
+
             activateSlot(slotKeys[0]);
 
             let dragging = false;
@@ -270,6 +346,12 @@
                 zoom = parseInt(range.value, 10) || 100;
                 apply();
             });
+
+            box.addEventListener('wheel', function (e) {
+                e.preventDefault();
+                zoom = (parseInt(slotInputs[active].zoom.value, 10) || 100) + (e.deltaY < 0 ? 5 : -5);
+                apply();
+            }, { passive: false });
 
             resetBtn.addEventListener('click', function () {
                 fx = 50;

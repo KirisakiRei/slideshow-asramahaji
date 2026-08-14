@@ -169,6 +169,8 @@ class MediaUploadUxTest extends TestCase
         $response->assertSee('fitBox', false);
         $response->assertSee('zoom-range', false);
         $response->assertSee('framing-label', false);
+        $response->assertSee('draft-badge', false);
+        $response->assertSee('localStorage', false);
         $response->assertSee('name="crop_data[main][fx]"', false);
         $response->assertSee('name="crop_data[facilities][fx]"', false);
         $response->assertSee('name="crop_data[next_event][fx]"', false);
